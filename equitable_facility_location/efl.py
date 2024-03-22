@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 import datalib
+import model
 import pandas as pd
 
 # define three file types used for model data input
@@ -33,32 +34,61 @@ dist_file_info = datalib.FileInfo(
 )
 
 test_data_path = os.path.dirname(os.path.abspath(__file__))+'/../data/test_data/'
+orig_file_path = test_data_path+'origins_basic.csv'
+dest_file_path = test_data_path+'destinations_basic.csv'
+dist_lookup_path = test_data_path+'distances_cartesian.csv'
+
+# check if all the data looks ok; exit if not
+# should these functions take paths and return dataframes if everything is fine? (how?)
+errors = []
+errors.append(datalib.check_data(orig_file_path, orig_file_info))
+errors.append(datalib.check_data(dest_file_path, dest_file_info))
+errors.append(datalib.check_data(dist_lookup_path, dist_file_info))
+if len(errors):
+    print(errors)  # this shouldn't print anything if there aren't any errors
+    # how do I make it exit if there are data errors?
+
+# generate dataframes for model
+orig_df = datalib.clean_origins(pd.read_csv(orig_file_path))
+dest_df = pd.read_csv(dest_file_path)
+dist_lookup_df = pd.read_csv(dist_lookup_path)
+dist_df = datalib.build_dist_df(orig_df, dest_df, dist_lookup_df)
+
+efl_model = model.minimize_kpede_model(orig_df, dest_df, dist_df, 5)
+
+
+# data handling tests below
+# need to: 
+# figure out how to handle errors gracefully
+# move these tests into the test module
+test_data_path = os.path.dirname(os.path.abspath(__file__))+'/../data/test_data/'
 edge_case_path = test_data_path+'edge_cases/'
 
 # test check of correct origin file
 csv_path = test_data_path+'origins_basic.csv'
-print(datalib.check_data(csv_path, orig_file_info)==[]) 
+print(datalib.check_data(csv_path, orig_file_info)==[])
+
+# test cleaning of origin file
+csv_path = test_data_path+'origins_basic.csv'
+orig_df = datalib.clean_origins(pd.read_csv(csv_path))
+print(orig_df.shape[0]==30)
+# Dan: what do I do with the errors I'm returning? 
+# Can I return a df OR an error?
 
 # test check of correct destination file
 csv_path = test_data_path+'destinations_basic.csv'
 print(datalib.check_data(csv_path, dest_file_info)==[])
 dest_df = pd.read_csv(csv_path)
 
-# test check of correct distance lookup files
+# test check of correct floating point distance lookup file
 csv_path = test_data_path+'distances_cartesian.csv'
 print(datalib.check_data(csv_path, dist_file_info)==[])
+# generate distance lookup df using cartesian distances
+dist_lookup = pd.read_csv(csv_path)
+
+# test check of correct integer distance lookup file
 csv_path = test_data_path+'distances_taxi.csv'
 print(datalib.check_data(csv_path, dist_file_info)==[])
-
-# test cleaning of origin file
-orig_df = datalib.clean_origins(pd.read_csv(csv_path))
-print(orig_df.shape[0]==30)
-# Dan: what do I do with the errors I'm returning? 
-# Can I return a df OR an error?
-
-# generate the other two dfs
-dest_df = pd.read_csv(csv_path)
-dist_lookup = pd.read_csv(csv_path)
 
 # test creation of distance file with good files
 dist_df = datalib.build_dist_df(orig_df, dest_df, dist_lookup)
@@ -94,3 +124,9 @@ csv_path = edge_case_path+'destinations_invalid_values.csv'
 print(datalib.check_data(csv_path, dest_file_info)==
       ["Invalid values in column 'open': ['closed', 'open'] not among ['yes', 'percent']", 
        "Invalid values in column 'preference': [5, 'open'] not among [-3, -2, -1, 0, 1, 2, 3]"])
+
+# test compiling origin file with nonpositive populations
+csv_path = edge_case_path+'origins_nonpos_populations.csv'
+df = pd.read_csv(csv_path)
+origin_df = datalib.clean_origins(df)
+print(origin_df.shape[0]==25)

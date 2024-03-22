@@ -1,8 +1,8 @@
 id,open
 dest1,yes
-dest2,percent
-dest3,percent
-dest4,
+dest2,
+dest3,yes
+dest4,yes
 dest5,
 dest6,
 dest7,

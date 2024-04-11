@@ -33,17 +33,15 @@ https:||doi.org|10.1016|j.compenvurbsys.2020.101590)
 
 1. Clone the main branch of this repository
 2. [Install anaconda](ttps://conda.io/projects/conda/en/latest/user-guide/install/index.html) if you don't already have it
-3. In a terminal (an Anaconda terminal on a Windows machine) move into the top level of equitable-facility-location directory. 
-    - Run the following command to create a conda environment with the required installations. 
-        - `conda env create -f environment.yml`
-    - Every time you wish to run the code, activate the newly created conda environment (from any directory): 
-        - `conda activate efl`
-4. After activating the efl environment, run the following command to enable the command line interface at the top level of the equitable-facility-location directory:
+3. In a terminal (or an anaconda terminal on a Windows machine) move into the top level of equitable-facility-location directory and run the following commands. These commands create a new conda virtual environment called "efl" and install the necessary packages, including this one, in the new environment:
+    - `conda env create -f environment.yml`
+    - `conda activate efl`
     - `pip install .`
-5. Optimizatin solvers:
-    - You should now be able to run the code with the default solver, [SCIP](https://www.scipopt.org/).
-    - In order to use the commercial solver, [Gurobi](https://www.gurobi.com), you will need to install a [Gurobi license](https://www.gurobi.com/solutions/licensing/).   
-6. To test that the environment is setup correctly, run unit tests by evaluating the command `pytest -W ignore` from the top level directory of the  package. Every test should pass or be skipped (tests involving Gurobi will be skipped).
+4. Every time you wish to use the equitable-facility-location package, activate the efl environment:
+    - `conda activate efl`
+5. You should be able to run the code with the default solver, [SCIP](https://www.scipopt.org/).
+    - In order to use the commercial solver, [Gurobi](https://www.gurobi.com), (using the keyword argument --solver='gurobi') you will need to install a [Gurobi license](https://www.gurobi.com/solutions/licensing/).   
+6. To test that the environment is setup correctly, run unit tests by evaluating the command `pytest -W ignore` from inside the top level directory, equitable-facility-location. Every test should pass or be skipped (tests involving Gurobi will be skipped).
 
 ## Entry points
 

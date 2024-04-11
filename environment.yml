@@ -1,0 +1,14 @@
+name: efl
+channels:
+  - anaconda
+  - conda-forge
+  - https://conda.anaconda.org/gurobi
+  - defaults
+dependencies:
+  - pytest
+  - pandas
+  - pyomo
+  - click
+  - gurobi
+  - pyscipopt
+  - liblapack

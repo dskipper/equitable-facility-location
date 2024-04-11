@@ -36,14 +36,14 @@ https:||doi.org|10.1016|j.compenvurbsys.2020.101590)
 3. In a terminal (an Anaconda terminal on a Windows machine) move into the top level of equitable-facility-location directory. 
     - Run the following command to create a conda environment with the required installations. 
         - `conda env create -f environment.yml`
-    - Run the following command to enable the command line interface:
-        - `pip install .`
-4. Every time you wish to run the code, activate the newly created conda environment (from any directory):
-    - `conda activate efl`
+    - Every time you wish to run the code, activate the newly created conda environment (from any directory): 
+        - `conda activate efl`
+4. After activating the efl environment, run the following command to enable the command line interface at the top level of the equitable-facility-location directory:
+    - `pip install .`
 5. Optimizatin solvers:
-    - You should now be able to run the code with the default solver, [scip](https://www.scipopt.org/).
+    - You should now be able to run the code with the default solver, [SCIP](https://www.scipopt.org/).
     - In order to use the commercial solver, [Gurobi](https://www.gurobi.com), you will need to install a [Gurobi license](https://www.gurobi.com/solutions/licensing/).   
-6. To test that the environment is setup correctly, run unit tests by evaluating the command `pytest -W ignore` from the top level directory of the  package. Every test should pass or be skipped (tests involving gurobi are set to be skipped).
+6. To test that the environment is setup correctly, run unit tests by evaluating the command `pytest -W ignore` from the top level directory of the  package. Every test should pass or be skipped (tests involving Gurobi will be skipped).
 
 ## Entry points
 

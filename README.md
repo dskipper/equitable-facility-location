@@ -1,6 +1,6 @@
 # equitable-facility-location
 
-The main method selects from a provided collection of possible 
+This package selects from a provided collection of possible 
 "destinations" to optimize the equitable access of a population 
 (located at "origins") to a selected destination.
 
@@ -29,8 +29,6 @@ https:||doi.org|10.1016|j.compenvurbsys.2020.101590)
 
 - [G. Sheriff, K.B. Maguire (2020). Health Risk, Inequality Indexes, and Environmental Justice. Risk Analysis: An Official Publication of the Society for Risk Analysis.](https:||research.uintel.co.nz|equality-measure|#:~:text=Sheriff%2C%20G.%2C%20%26%20Maguire%2C%20K.%20B.%20(2020).%20Health%20Risk%2C%20Inequality%20Indexes%2C%20and%20Environmental%20Justice.%20Risk%20Analysis%3A%20An%20Official%20Publication%20of%20the%20Society%20for%20Risk%20Analysis.)
 
-# How to use
-
 ## Getting started
 
 1. Clone the main branch of this repository
@@ -45,6 +43,7 @@ https:||doi.org|10.1016|j.compenvurbsys.2020.101590)
 5. Optimizatin solvers:
     - You should now be able to run the code with the default solver, [scip](https://www.scipopt.org/).
     - In order to use the commercial solver, [Gurobi](https://www.gurobi.com), you will need to install a [Gurobi license](https://www.gurobi.com/solutions/licensing/).   
+6. To test that the environment is setup correctly, run unit tests by evaluating the command `pytest -W ignore` from the top level directory of the  package. Every test should pass or be skipped (tests involving gurobi are set to be skipped).
 
 ## Entry points
 
@@ -188,6 +187,21 @@ Examples of the .csv files are provided in `equitable-facility-location/data/tes
             - 'num_locations_out'
             - 'scaling_factor_out'
             - 'aversion_out'
+
+## References
+
+- The optimization model is coded using the Python optimization modeling language, Pyomo:
+
+    - Bynum, Michael L., Gabriel A. Hackebeil, William E. Hart, Carl D. Laird, Bethany L. Nicholson, John D. Siirola, Jean-Paul Watson, and David L. Woodruff. Pyomo - Optimization Modeling in Python. Third Edition Vol. 67. Springer, 2021.
+
+    - Hart, William E., Jean-Paul Watson, and David L. Woodruff. "Pyomo: modeling and solving mathematical programs in Python." Mathematical Programming Computation 3(3) (2011): 219-260.
+
+- The SCIP optimization solver, which is generously provided under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0), is the default solver:
+
+    - [The SCIP Optimization Suite 9.0](https://optimization-online.org/2024/02/the-scip-optimization-suite-9-0/) *Suresh Bolusani, Mathieu Besançon, Ksenia Bestuzheva, Antonia Chmiela, João Dionísio, Tim Donkiewicz, Jasper van Doornmalen, Leon Eifler, Mohammed Ghannam, Ambros Gleixner, Christoph Graczyk, Katrin Halbig, Ivo Hedtke, Alexander Hoen, Christopher Hojny, Rolf van der Hulst, Dominik Kamp, Thorsten Koch, Kevin Kofler, Jurgen Lentz, Julian Manns, Gioni Mexi, Erik Mühmer, Marc E. Pfetsch, Franziska Schlösser, Felipe Serrano, Yuji Shinano, Mark Turner, Stefan Vigerske, Dieter Weninger, Lixing Xu* Available at [Optimization Online](https://optimization-online.org/2024/02/the-scip-optimization-suite-9-0/) and as [ZIB-Report 24-02-29](https://nbn-resolving.org/urn:nbn:de:0297-zib-95528), February 2024
+
+- The code includes an option to use the commercial solver, Gurobi. As noted above, this option requires a [Gurobi license](https://www.gurobi.com/solutions/licensing/).
+    - [Gurobi Optimization, LLC](https://www.gurobi.com). Gurobi Optimizer Reference Manual, 2023.
 
 
 ## How to cite

@@ -2,6 +2,7 @@ import sys
 import os
 import efl.optimize as optimize
 import pandas as pd
+import pytest
 
 test_data_path = os.path.dirname(os.path.abspath(__file__))+'/../data/test_data/'
 edge_case_path = test_data_path+'edge_cases/'
@@ -77,6 +78,7 @@ def test_min_ede_capacity():
 #     result = efl.run(orig_df, dest_df, dist_lookup_df, minimize='ede', num_locations=7, capacity=60, mip_gap=0.0062) # = 0.63 %
 #     assert result.parameters_dict['mip_gap_actual'] >= 0.0062
 
+@pytest.mark.skip(reason="requires gurobi executable and license")
 def test_mip_gap():
     result = optimize.run(orig_df, dest_df, dist_lookup_df, num_locations=8, capacity=60, mip_gap=0.0063, solver='gurobi')
     assert round(result.solver_mip_gap,4)==0.0026

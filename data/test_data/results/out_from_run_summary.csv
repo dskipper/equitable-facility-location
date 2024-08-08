@@ -11,7 +11,7 @@ time_limit,
 mip_gap,
 capacity,90
 out_file,/Users/daphneskipper/Documents/coding/git/equitable-facility-location/efl/../data/test_data/results/out_from_run.csv
-solver_wall_time,0.24887681007385254
+solver_wall_time,0.24991416931152344
 solver_mip_gap,0.0
 aversion_out,-1.6575059616563974
 scaling_factor_out,0.00020910636389071628

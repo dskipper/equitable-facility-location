@@ -1,10 +1,12 @@
 import sys
 import os
-#sys.path.append(os.path.dirname(__file__))
 import efl.data as data
 import efl.model as model
 import pandas as pd
 import click
+
+import importlib
+importlib.reload(model)
 
 @click.command()
 @click.argument('origin_file', type=click.File('r'))
@@ -33,12 +35,14 @@ import click
               help='solver: time limit in seconds (returns best solutions so far)')
 @click.option('--mip_gap', default=None, type=click.FloatRange(0,1,min_open=True,max_open=True), 
               help='solver: MIP optimality gap')
+@click.option('--tee', default=None, type=click.BOOL,
+              help='print solver output to screen (default: False)')
 
 def cli(origin_file, destination_file, distance_file, out_file, *,
         minimize, num_locations, target_ede,
         aversion, scaling_factor,
         min_percent, radius, capacity,
-        solver, time_limit, mip_gap):
+        solver, time_limit, mip_gap, tee):
     """Command line interface to run equitable facility location
     model and send output to two csv files:
     out_file -- origin, destination, distance, population
@@ -64,6 +68,7 @@ def cli(origin_file, destination_file, distance_file, out_file, *,
     solver -- 'scip' or 'gurobi' (default: 'scip')
     time_limit -- max solver time (seconds)
     mip_gap -- min optimality gap
+    tee -- print solver output to screen (default: False)
     """
 
     # check if all the data looks ok; exit if not
@@ -80,7 +85,8 @@ def cli(origin_file, destination_file, distance_file, out_file, *,
                         minimize=minimize, num_locations=num_locations, target_ede=target_ede,
                         aversion=aversion, scaling_factor=scaling_factor,
                         min_percent=min_percent, radius=radius,
-                        solver=solver, time_limit=time_limit, mip_gap=mip_gap)   
+                        solver=solver, time_limit=time_limit, mip_gap=mip_gap,
+                        tee = tee)   
     except ValueError as e:
         print(f'Error: {e}')
         return 1
@@ -100,7 +106,7 @@ def run(origin_df, destination_df, distance_lookup_df, *,
         out_file=None, minimize='ede', num_locations=None, target_ede=None,
         aversion=-1, scaling_factor=None,
         min_percent=0, radius=None, capacity=None,
-        solver='scip', time_limit=None, mip_gap=None):
+        solver='scip', time_limit=None, mip_gap=None, tee=None):
     """Run equitable facility location model and return
     equitable_facility_location.model.Results object
 
@@ -124,6 +130,7 @@ def run(origin_df, destination_df, distance_lookup_df, *,
     solver -- 'scip' or 'gurobi' (default: 'scip')
     time_limit -- max solver time (seconds)
     mip_gap -- min optimality gap
+    tee -- print solver output to screen (default: False)
     """
     
     orig_df = data.validate_origin_df(origin_df)
@@ -138,7 +145,8 @@ def run(origin_df, destination_df, distance_lookup_df, *,
                             minimize=minimize, num_locations=num_locations, target_ede=target_ede,
                             aversion=aversion, scaling_factor=scaling_factor,
                             min_percent=min_percent, radius=radius,
-                            solver=solver, time_limit=time_limit, mip_gap=mip_gap)
+                            solver=solver, time_limit=time_limit, mip_gap=mip_gap, 
+                            tee=tee)
     except ValueError as e:
         print(f'Error: {e}')
         return 1
@@ -155,7 +163,7 @@ def _run_optimization(orig_df, dest_df, dist_lookup_df, *,
             minimize='ede', num_locations=None, target_ede=None,
             aversion=-1, scaling_factor=None,
             min_percent=0, radius=None,
-            solver='scip', time_limit=None, mip_gap=None):
+            solver='scip', time_limit=None, mip_gap=None, tee=None):
     
     if minimize=='ede' and num_locations is None:
         raise ValueError(f'if minimize=ede then num_locations must be set')
@@ -173,7 +181,8 @@ def _run_optimization(orig_df, dest_df, dist_lookup_df, *,
                         num_locations, target_ede,
                         aversion=aversion, scaling_factor=scaling_factor,
                         min_percent=min_percent, radius=radius,
-                        solver=solver, time_limit=time_limit, mip_gap=mip_gap
+                        solver=solver, time_limit=time_limit, mip_gap=mip_gap, 
+                        tee=tee
                         )
 
     return results
@@ -205,6 +214,112 @@ def _remove_csv(out_file):
     else:
         out_file_trimmed = out_file
     return out_file_trimmed
+
+
+###############################################################
+# CAUTION:                                                    #
+# Terrible code follows -- lots of duplication from above.    #
+###############################################################
+
+###### ISOCHRONE ########################################################
+# Minimize the number of residents OUTSIDE x radius of k open locations
+# or 
+# Minimize the number of locations so that every resident is within x 
+# radius of an open location
+#########################################################################
+def run_isochrone(origin_df, destination_df, distance_lookup_df, iso_radius, *, 
+        out_file=None, minimize='uncovered', num_locations=None, percent_coverage=1,
+        min_percent=0, radius=None, capacity=None,
+        solver=None, time_limit=None, mip_gap=None, tee=None):
+    """Run isochrone optimization model and return
+    equitable_facility_location.model.Results object
+
+    Required arguments:
+    origin_df -- origin data (pandas DataFrame)
+    destination_df -- destination data (pandas DataFrame)
+    distance_lookup_df -- distance lookup table (pandas DataFrame)
+    iso_radius -- number in same units as distances
+
+    Keyword arguments (model):
+    out_file -- path to csv for results (default: None)
+    minimize -- 'uncovered' or 'locations' (default: 'uncovered')
+    num_locations -- (required if minimize = 'uncovered')
+    percent_coverage -- % of pop that must be covered (used if minimize='locations'; default=1)
+    min_percent -- min % of open='percent' dests to select (default: 0)
+    radius -- max distance to include in optimization
+    capacity -- assigned to dests with no individual capacity
+
+    Keyword arguments (solver):
+    solver -- 'scip' or 'gurobi' (default: 'scip')
+    time_limit -- max solver time (seconds)
+    mip_gap -- min optimality gap
+    tee -- print solver output to screen (default: False)
+    """
+    
+    orig_df = data.validate_origin_df(origin_df)
+    dest_df = data.validate_destination_df(destination_df, capacity)
+    dist_lookup_df = data.validate_distance_df(distance_lookup_df)
+    if any(df is None for df in [orig_df, dest_df, dist_lookup_df]):
+        print('Data has errors. See logs.')
+        return 1 # 1 means data error (0 means success)
+    
+    try:
+        results = _run_isochrone(orig_df, dest_df, dist_lookup_df, iso_radius,
+                            minimize=minimize, num_locations=num_locations, 
+                            percent_coverage=percent_coverage,
+                            min_percent=min_percent, radius=radius,
+                            solver=solver, time_limit=time_limit, mip_gap=mip_gap, 
+                            tee=tee)
+    except ValueError as e:
+        print(f'Error: {e}')
+        return 1
+
+    # add parameters that don't get passed to the model module
+    results.parameters_dict['capacity'] = capacity
+    results.parameters_dict['out_file'] = out_file
+    if out_file is not None:
+        _print_to_files_isochrone(results, out_file)
+
+    return results
+
+def _run_isochrone(orig_df, dest_df, dist_lookup_df, iso_radius, *, 
+            minimize='uncovered', num_locations=None, percent_coverage=1,
+            min_percent=0, radius=None,
+            solver=None, time_limit=None, mip_gap=None, tee=None):
+    
+    if minimize=='uncovered' and num_locations is None:
+        raise ValueError(f'if minimize=uncovered then num_locations must be set')
+    
+    dist_df = data.build_dist_df(orig_df, dest_df, dist_lookup_df)
+    if dist_df is None:
+        print('Data has errors. See logs.')
+        return 1
+    
+    print(f'(isochrone) minimizing {minimize}')
+    results = model.optimize_isochrone(
+                        orig_df, dest_df, dist_df, iso_radius, minimize,
+                        num_locations, percent_coverage=percent_coverage,
+                        min_percent=min_percent, radius=radius,
+                        solver=solver, time_limit=time_limit, mip_gap=mip_gap, 
+                        tee=tee
+                        )
+
+    return results
+
+def _print_to_files_isochrone(results, out_file):
+    out_file_stripped = _remove_csv(out_file)
+    summary_dict = results.parameters_dict.copy()
+    summary_dict['solver_wall_time'] = results.solver_wall_time
+    summary_dict['solver_mip_gap'] = results.solver_mip_gap
+    summary_dict['num_locations_out'] = results.num_locations_out()
+    summary_dict['mean_distance_out'] = results.mean_distance_out()
+    summary_df = pd.DataFrame(summary_dict.items(), columns=['parameter','value'])
+
+    results.assignment_df.to_csv(out_file_stripped+'.csv', index=False)
+    summary_df.to_csv(out_file_stripped+'_summary.csv', index=False)
+
+    return 0
+
 
 if __name__=='__main__':
    cli()

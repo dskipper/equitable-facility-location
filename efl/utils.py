@@ -58,3 +58,14 @@ def get_mean_distance(assignment_df):
 
     return avg_dist
 
+def get_percent_covered(assignment_df, iso_radius):
+    """calculate the percent of population within radius of open service
+
+    Arguments:
+    assignment_df -- columns: origin, destination, population, distance (one row per origin)
+    iso_radius -- coverage radius (same units as distance)
+    """
+    total_pop = assignment_df['population'].sum()
+    covered_pop = assignment_df.query(f'distance <= {iso_radius}')['population'].sum()
+
+    return covered_pop / total_pop
